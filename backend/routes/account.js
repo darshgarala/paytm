@@ -17,6 +17,7 @@ router.get("/balance", authMiddleware, async (req, res) => {
 
 router.post("/transfer", authMiddleware, async (req, res) => {
   // // console.log("object");
+
   // const session = await mongoose.startSession();
 
   // session.startTransaction();
@@ -71,7 +72,7 @@ router.post("/transfer", authMiddleware, async (req, res) => {
   // } finally {
   //   session.endSession();
   // }
-
+  console.log("object = ", req.body);
   const session = await mongoose.startSession();
 
   session.startTransaction();

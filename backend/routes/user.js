@@ -8,7 +8,7 @@ const { Account } = require("../model/accountmodel.js");
 const router = express.Router();
 
 const signupSchema = zod.object({
-  username: zod.string().email(),
+  username: zod.string(),
   password: zod.string(),
   firstname: zod.string(),
   lastname: zod.string(),
@@ -16,54 +16,56 @@ const signupSchema = zod.object({
 
 router.post("/signup", async (req, res) => {
   const { success } = signupSchema.safeParse(req.body);
-  console.log("success ", success);
+  // console.log("success ", req.body);
+
   if (!success) {
-    return res.status(411).json({
-      messsage: "Email already taken / Incorrect inputs",
+    return res.status(404).json({
+      messsage: "Incorrect inputs",
     });
   }
 
-  try {
-    const existuser = await User.find({ username: req.body.username });
+  // try {
+  const existuser = await User.find({ username: req.body.username });
 
-    // console.log(existuser);
-    if (!existuser) {
-      return res.status(411).json({
-        messsage: "Email already taken / Incorrect inputs",
-      });
-    }
+  // console.log(existuser);
 
-    const dbUser = await User.create({
-      username: req.body.username,
-      password: req.body.password,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
-    });
-
-    const userId = dbUser._id;
-
-    // ------create----new ----- account ---
-    await Account.create({
-      userId,
-      balance: 1 + Math.random() * 1000,
-    });
-
-    const token = jwt.sign(
-      {
-        userId: dbUser._id,
-      },
-      JWT_SECRET
-    );
-
-    res.json({
-      message: "User created successfully",
-      token: token,
-    });
-  } catch (error) {
-    res.json({
-      message: "Internal Server Error",
+  if (!existuser) {
+    return res.status(404).json({
+      messsage: "Email already taken ",
     });
   }
+
+  const dbUser = await User.create({
+    username: req.body.username,
+    password: req.body.password,
+    firstname: req.body.firstname,
+    lastname: req.body.lastname,
+  });
+
+  const userId = dbUser._id;
+
+  // ------create----new ----- account ---
+  await Account.create({
+    userId,
+    balance: 1 + Math.random() * 1000,
+  });
+
+  const token = jwt.sign(
+    {
+      userId: dbUser._id,
+    },
+    JWT_SECRET
+  );
+
+  res.json({
+    message: "User created successfully",
+    token: token,
+  });
+  // } catch (error) {
+  // res.json({
+  //   message: "Internal Server Error",
+  // });
+  // }
 });
 
 const signinSchema = zod.object({
@@ -131,12 +133,12 @@ router.get("/bulk", async (req, res) => {
   const users = await User.find({
     $or: [
       {
-        firstName: {
+        firstname: {
           $regex: filter,
         },
       },
       {
-        lastName: {
+        lastname: {
           $regex: filter,
         },
       },
@@ -146,8 +148,8 @@ router.get("/bulk", async (req, res) => {
   res.json({
     user: users.map((user) => ({
       username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstname: user.firstname,
+      lastname: user.lastname,
       _id: user._id,
     })),
   });
